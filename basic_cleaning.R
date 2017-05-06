@@ -4,7 +4,9 @@ library(lubridate)
 library(stringr)
 library(httr)
 library(dplyr)
+library(wordcloud2)
 
+tweets <- read.csv("tweets.csv")
 
 tweets <- tweets %>%
   mutate(date = mdy(paste(substring(created_at, 5, 10), substring(created_at, 27 ,30))))
@@ -51,5 +53,68 @@ bigrams <- tidy_bigrams %>%
   filter(n >= 30) %>%
   mutate(bigram = reorder(bigram, n))
 
-ggplot(bigrams, aes(bigram, n)) +  geom_bar(stat = "identity") 
+tidy_bigrams %>%
+  count(bigram, sort=TRUE) %>%
+  filter(n >= 150) %>%
+  mutate(bigram = reorder(bigram, n)) %>%
+  ggplot(aes(bigram, n)) +
+  geom_bar(stat = 'identity', color = "black", fill = "deepskyblue") +
+  xlab(NULL) +
+  ylab(NULL) +
+  ggtitle(paste('Most common bigrams containing evangelical')) +
+  theme(legend.position="none") +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(text=element_text(size=18, family="KerkisSans"))
+
+reg <- "([^A-Za-z_\\d#@:/']|'(?![A-Za-z_\\d#@:/]))"
+urls_temp <- tweets %>%
+  unnest_tokens(word, text, token = "regex", pattern = reg, to_lower = FALSE) %>%
+  mutate(word = str_replace_all(word, "https|//t|http|&amp;|&lt;|&gt;", ""),
+         word = str_replace_all(word, "co/", "https://t.co/")) %>%
+  select(word) %>%
+  filter(grepl('https://t.co/', word, fixed = TRUE)) %>%
+  count(word, sort=TRUE) %>%
+  mutate(word = reorder(word, n))
+
+urls_common <- urls_temp %>%
+  filter(n >= 5) %>%
+  mutate(source_url = as.character(word)) %>%
+  select(source_url, count = n)
+
+
+url <- t(sapply(urls_common$source_url, GET)) %>%
+  as_tibble() %>%
+  select(url, status_code)
+
+url_list <- cbind(urls_common, unnest(url)) %>%
+  as_tibble() %>%
+  select(url, count, status_code) %>%
+  filter(status_code != 404,
+         url != 'https://t.co/',
+         !grepl('https://twitter.com/', url))
+
+extract_domain <- function(url) {
+  return(gsub('www.', '', unlist(strsplit(unlist(strsplit(as.character(url), '//'))[2], '/'))[1]))
+}
+
+# count the frequency of a domain's occurrence in the most frequent URL list
+domain_list <- url_list %>%
+  mutate(domain = mapply(extract_domain, url)) %>%
+  group_by(domain) %>%
+  summarize(domain_count = sum(count)) %>%
+  arrange(desc(domain_count))
+
+domain_list %>%
+  mutate(domain = reorder(domain, domain_count)) %>%
+  filter(domain_count > 75) %>% 
+  ggplot(aes(domain, domain_count)) +
+  geom_bar(color = "black", fill = "deepskyblue", stat = 'identity') +
+  xlab(NULL) +
+  ylab(NULL) +
+  ggtitle(paste('Domains linked in tweets containing evangelical')) +
+  theme(legend.position="none") +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(text=element_text(size=18, family="KerkisSans"))
   
