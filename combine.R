@@ -51,7 +51,7 @@ ggplot(t_count, aes(x=day, y=n)) +
   scale_x_date(breaks = date_breaks("weeks"), labels = date_format("%b. %d")) +
   labs(x= "Date", y = "Number of Tweets", title = "Explosion in the Use of 'Evangelical' on Twitter") 
 
-ggsave(file="D://tags_twitter/count_day_compare.png", type = "cairo-png", width = 20, height = 15)
+ggsave(file="D://tags_twitter/count_day_compare_small.png", type = "cairo-png", width = 18, height = 15)
 
 
 
@@ -100,11 +100,40 @@ ggplot(sent, aes(x=day, y=sentiment)) +
   geom_col(fill = "red4", color = "black") +
   bar_rb() + 
   # scale_x_date(breaks = date_breaks("weeks"), labels = date_format("%b. %d")) +
-  labs(x= "Date", y = "Total Daily Sentiment", title = "The Sentiment of Tweets Containing 'Evangelical' on Twitter", subtitle = "Using the 'Bing' Lexicon") +
+  labs(x= "Date", y = "Total Daily Sentiment", title = "The Sentiment of Tweets Containing 'Evangelical'", subtitle = "Using the 'Bing' Lexicon") +
   facet_grid(~group_f, scale = "free_x")
 
 
 
-ggsave(file="D://tags_twitter/sentiment_compare_facet.png", type = "cairo-png", width = 20, height = 15)
+ggsave(file="D://tags_twitter/sentiment_compare_facet_small.png", type = "cairo-png", width = 18, height = 15)
 
+
+positive <- tidy_tweets_dec %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  filter(sentiment == "positive") %>% count(word) %>% arrange(-n)
+
+negative <- tidy_tweets_dec %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  filter(sentiment == "negative") %>% count(word) %>% arrange(-n)
+
+
+pos <- positive %>% 
+  filter(n >150) %>% 
+  ggplot(., aes(x=reorder(word,n), y=n)) +
+  geom_col(color = "black", fill = "darkorchid") +
+  coord_flip()+
+  flip_bar_rb() +
+  labs(x="", y="", title = "Most Common Positive Words") 
+
+neg <- negative %>% 
+  filter(n >150) %>% 
+  ggplot(., aes(x=reorder(word,n), y=n)) +
+  geom_col(color = "black", fill = "black") +
+  coord_flip()+
+  flip_bar_rb() +
+  labs(x="", y="", title = "Most Common Negative Words") 
+
+pos + neg
+
+ggsave(file="D://tags_twitter/sentiment_compare_words.png", type = "cairo-png", width = 18, height = 15)
 
