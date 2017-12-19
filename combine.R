@@ -23,7 +23,7 @@ tweets <- tweets %>%
 
 count_tweets <- tweets %>% group_by(day) %>% count()
 
-t_count <- bind_rows(count_tweets, count_tweets_dec)
+t_count <- bind_rows(count_tweets, count_tweets_dec) %>% mutate(date = factor(day))
 
 
 bar_rb <- function(base_size = 25, base_family = "IBM Plex Serif") 
@@ -45,11 +45,15 @@ bar_rb <- function(base_size = 25, base_family = "IBM Plex Serif")
   
 }
 
-ggplot(t_count, aes(x=day, y=n)) + 
+t_count %>% 
+  na.omit() %>% 
+  ggplot(., aes(x=as.factor(day), y=n)) + 
   geom_col(fill = "cornflowerblue", color = "black") +
   bar_rb() + 
-  scale_x_date(breaks = date_breaks("weeks"), labels = date_format("%b. %d")) +
-  labs(x= "Date", y = "Number of Tweets", title = "Explosion in the Use of 'Evangelical' on Twitter") 
+  # scale_x_date(breaks = date_breaks("weeks"), labels = date_format("%b. %d")) +
+  labs(x= "Date", y = "Number of Tweets", title = "Explosion in the Use of 'Evangelical' on Twitter") +
+  geom_vline(xintercept = 38.45, linetype = "dashed", color = "red", size = 2) +
+  geom_rect(data=NULL,aes(xmin=38.45,xmax=44.5,ymin=0,ymax=Inf), fill="gray74", alpha = 0.015)
 
 ggsave(file="D://tags_twitter/count_day_compare_small.png", type = "cairo-png", width = 18, height = 15)
 
