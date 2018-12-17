@@ -86,7 +86,7 @@ bigrams <- bigrams %>%
 
 bigrams$bigram <- iconv(bigrams$bigram, "latin1", "ASCII", sub="")
 
-bigrams$pol <- c(0,0,0,0,1,0,1,0,1,1,0,0,0,1,0,1,0,0,1,1,1,0,1,0,1)
+bigrams$pol <- c(1,0,0,1,1,0,1,0,1,1,0,0,0,1,0,1,0,0,1,1,1,0,1,0,1)
 
 
 bigrams %>% 
@@ -94,9 +94,9 @@ bigrams %>%
   ggplot(., aes(x=reorder(bigram, n), y = n, fill = pol)) +
   geom_col(color = "black") +
   scale_fill_manual(values = c("azure3", "firebrick3")) +
+  theme_gg("Roboto Slab") +
   coord_flip() +
   geom_text(aes(y = n - 85, label = n), position = position_dodge(width = .9), size = 10, family = "font") +
-  theme_gg("Roboto Slab") +
   labs(x = "", y = "Count", title = "Most Frequent Bigrams in Dec. 2017", caption = "Data: Twitter REST API") + 
   ggsave("D://tags_twitter/calf/second_bigram.png", width = 7)
   
@@ -138,7 +138,7 @@ bigrams <- bigrams %>%
 
 bigrams$bigram <- iconv(bigrams$bigram, "latin1", "ASCII", sub="")
 
-bigrams$pol <- c(1,0,1,0,0,1,1,1,1,1,0,1,0,1,1,1,0,0,1,0,1,1,1,1,0)
+bigrams$pol <- c(1,0,1,0,0,1,0,1,1,1,0,1,0,1,1,1,0,0,1,0,1,1,1,1,0)
 
 
 bigrams %>% 
